@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Integration where
@@ -10,16 +11,15 @@ import Control.Arrow ((&&&))
 import qualified Data.Acquire as Acquire
 import Data.Bifunctor (first)
 import qualified Data.Map.Strict as Map
-import Data.Text (Text)
 import qualified Data.Text as Text
 import Database.Persist.Sql (Entity(..), Single(..), (=.), (==.))
+import Test.Hspec.Expectations.Match (shouldMatch)
 import Test.Tasty
 import Test.Tasty.HUnit
 import UnliftIO (Exception, liftIO, throwIO, try)
 
 import Database.Persist.Monad
 import Example
-import TestUtils.Match (Match(..), (@?~))
 
 data TestError = TestError
   deriving (Show, Eq)
@@ -485,23 +485,18 @@ testPersistentAPI = testGroup "Persistent API"
       result <- runTestApp $ do
         setupUnsafeMigration
         parseMigration migration
-      result @?~ Right @[Text]
-        [ Match
-            ( False
-            , Text.concat
-                [ "CREATE TEMP TABLE \"person_backup\"("
-                , "\"id\" INTEGER PRIMARY KEY,"
-                , "\"name\" VARCHAR NOT NULL,"
-                , "\"age\" INTEGER NOT NULL,"
-                , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
-                ]
+      $([| result |] `shouldMatch` [p|
+        Right
+          [ ( False
+            , "CREATE TEMP TABLE \"person_backup\"(\"id\" INTEGER PRIMARY KEY,\"name\" VARCHAR NOT NULL,\"age\" INTEGER NOT NULL,CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
             )
-        , Anything
-        , Match (True, "DROP TABLE \"person\"")
-        , Anything
-        , Anything
-        , Match (False, "DROP TABLE \"person_backup\"")
-        ]
+          , _
+          , (True, "DROP TABLE \"person\"")
+          , _
+          , _
+          , (False, "DROP TABLE \"person_backup\"")
+          ]
+        |])
 
   , testCase "parseMigration'" $ do
       let action f = runTestApp $ do
@@ -521,39 +516,29 @@ testPersistentAPI = testGroup "Persistent API"
       result <- runTestApp $ do
         setupUnsafeMigration
         showMigration migration
-      result @?~
-        [ Match $ Text.concat
-            [ "CREATE TEMP TABLE \"person_backup\"("
-            , "\"id\" INTEGER PRIMARY KEY,"
-            , "\"name\" VARCHAR NOT NULL,"
-            , "\"age\" INTEGER NOT NULL,"
-            , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"));"
-            ]
-        , Anything
-        , Match "DROP TABLE \"person\";"
-        , Anything
-        , Anything
-        , Match "DROP TABLE \"person_backup\";"
+      $([| result |] `shouldMatch` [p|
+        [ "CREATE TEMP TABLE \"person_backup\"(\"id\" INTEGER PRIMARY KEY,\"name\" VARCHAR NOT NULL,\"age\" INTEGER NOT NULL,CONSTRAINT \"unique_name\" UNIQUE (\"name\"));"
+        , _
+        , "DROP TABLE \"person\";"
+        , _
+        , _
+        , "DROP TABLE \"person_backup\";"
         ]
+        |])
 
   , testCase "getMigration" $ do
       result <- runTestApp $ do
         setupUnsafeMigration
         getMigration migration
-      result @?~
-        [ Match $ Text.concat
-            [ "CREATE TEMP TABLE \"person_backup\"("
-            , "\"id\" INTEGER PRIMARY KEY,"
-            , "\"name\" VARCHAR NOT NULL,"
-            , "\"age\" INTEGER NOT NULL,"
-            , "CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
-            ]
-        , Anything
-        , Match "DROP TABLE \"person\""
-        , Anything
-        , Anything
-        , Match "DROP TABLE \"person_backup\""
+      $([| result |] `shouldMatch` [p|
+        [ "CREATE TEMP TABLE \"person_backup\"(\"id\" INTEGER PRIMARY KEY,\"name\" VARCHAR NOT NULL,\"age\" INTEGER NOT NULL,CONSTRAINT \"unique_name\" UNIQUE (\"name\"))"
+        , _
+        , "DROP TABLE \"person\""
+        , _
+        , _
+        , "DROP TABLE \"person_backup\""
         ]
+        |])
 
   , testCase "runMigration" $ do
       result <- runTestApp $ do

@@ -28,6 +28,7 @@ tests:
       - bytestring
       - conduit
       - containers
+      - hspec-expectations-match
       - monad-logger
       - persistent
       - persistent-mtl

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e778c01c12d7cd9d6afd05ad2fc3b688916dfa7f3bc4d24583d8e401a117eb1b
+-- hash: e66a10d1f8831a58295235063e27fa7cabd1b7d6e24bac5e265b0d32629c89c0
 
 name:           persistent-mtl
 version:        0.1.0.0
@@ -47,7 +47,6 @@ test-suite persistent-mtl-test
       Mocked
       MockSqlQueryT
       SqlQueryRepTest
-      TestUtils.Match
       Paths_persistent_mtl
   hs-source-dirs:
       test
@@ -57,6 +56,7 @@ test-suite persistent-mtl-test
     , bytestring
     , conduit
     , containers
+    , hspec-expectations-match
     , monad-logger
     , persistent
     , persistent-mtl
