@@ -1,0 +1,24 @@
+resolver: nightly-2021-12-16
+compiler: ghc-9.2.1
+
+extra-deps:
+  - aeson-2.0.2.0
+  - attoparsec-0.14.3
+  - base-compat-0.12.1
+  - base-compat-batteries-0.12.1
+  - explainable-predicates-0.1.2.0
+  - github: yesodweb/persistent
+    commit: 965f6632e74e0b30db403965277cd1b3aa9d222b
+    subdirs:
+      - persistent
+      - persistent-sqlite
+
+# https://github.com/cdsmith/explainable-predicates/issues/14
+allow-newer: true
+
+flags:
+  explainable-predicates:
+    regex: false
+
+ghc-options:
+  "$locals": -Werror
