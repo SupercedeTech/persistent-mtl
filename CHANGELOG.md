@@ -1,5 +1,7 @@
 # Unreleased
 
+* Add GHC 9.2 support
+
 # 0.4.0.0
 
 * Add some mtl instances: `MonadThrow`, `MonadCatch`, `MonadMask`, `MonadLogger`, `MonadReader`
