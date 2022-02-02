@@ -8,6 +8,7 @@ Defines 'MockSqlQueryT', which one can use in tests in order to mock out
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -43,9 +44,9 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Typeable (Typeable, eqT, (:~:)(..))
 import Database.Persist.Sql
-    (Entity, Filter, Key, PersistValue, SelectOpt, rawSqlProcessRow)
+    (Entity, Filter, Key, PersistValue, SelectOpt, SqlBackend, rawSqlProcessRow)
 
-import Database.Persist.Monad.Class (MonadSqlQuery(..), MonadTransaction(..))
+import Database.Persist.Monad.Class (MonadQuery(..), MonadTransaction(..))
 import Database.Persist.Monad.SqlQueryRep (QueryRep(..), SqlQueryRep)
 
 -- | A monad transformer for testing functions that use 'MonadSqlQuery'.
@@ -94,7 +95,8 @@ instance MonadIO m => MonadTransaction (MockSqlQueryT m) where
   type TransactionM (MockSqlQueryT m) = MockSqlQueryT m
   withTransaction = id
 
-instance MonadIO m => MonadSqlQuery (MockSqlQueryT m) where
+instance MonadIO m => MonadQuery (MockSqlQueryT m) where
+  type Backend (MockSqlQueryT m) = SqlBackend
   runQueryRep rep = do
     mockQueries <- MockSqlQueryT ask
     maybe (error $ "Could not find mock for query: " ++ show rep) liftIO

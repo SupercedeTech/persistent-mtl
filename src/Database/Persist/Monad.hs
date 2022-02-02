@@ -52,7 +52,8 @@ myFunction = do
 module Database.Persist.Monad
   (
   -- * Type class for executing database queries
-    MonadSqlQuery
+    MonadQuery
+  , MonadSqlQuery
   , MonadTransaction
   , withTransaction
 
@@ -125,7 +126,8 @@ instance MonadTransaction m => MonadTransaction (SqlTransaction m) where
   -- 'SqlTransaction' is ONLY in charge of executing queries.
   withTransaction = SqlTransaction . withTransaction
 
-instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) where
+instance (MonadSqlQuery m, MonadUnliftIO m) => MonadQuery (SqlTransaction m) where
+  type Backend (SqlTransaction m) = SqlBackend
   runQueryRep = SqlTransaction . runSqlQueryRep
 
 runSqlTransaction :: MonadUnliftIO m => SqlBackend -> SqlTransaction m a -> m a
@@ -218,7 +220,9 @@ instance MonadUnliftIO m => MonadTransaction (SqlQueryT m) where
       in loop 0
 
 
-instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
+instance MonadUnliftIO m => MonadQuery (SqlQueryT m) where
+  type Backend (SqlQueryT m) = SqlBackend
+
   -- Running a query directly in SqlQueryT will create a one-off transaction.
   runQueryRep = withTransaction . runQueryRep
 

@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -102,7 +103,7 @@ newtype TestApp a = TestApp
     , Monad
     , MonadIO
     , MonadRerunnableIO
-    , MonadSqlQuery
+    , MonadQuery
     , MonadTransaction
     , MonadResource
     )

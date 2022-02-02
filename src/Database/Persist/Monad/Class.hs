@@ -6,13 +6,18 @@ in order to interpret how to run a
 'Database.Persist.Monad.SqlQueryRep.SqlQueryRep' sent by a lifted function from
 @Database.Persist.Monad.Shim@.
 -}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 
 module Database.Persist.Monad.Class
   ( MonadTransaction(..)
-  , MonadSqlQuery(..)
+  , MonadQuery(..)
+  , MonadSqlQuery
   ) where
 
 import Control.Monad.Trans.Class (lift)
@@ -28,8 +33,9 @@ import qualified Control.Monad.Trans.Writer.Lazy as Writer.Lazy
 import qualified Control.Monad.Trans.Writer.Strict as Writer.Strict
 import Data.Kind (Type)
 import Data.Typeable (Typeable)
+import Database.Persist.Sql
 
-import Database.Persist.Monad.SqlQueryRep (SqlQueryRep)
+import Database.Persist.Monad.SqlQueryRep (QueryRepresentable(..))
 
 -- | The type-class for monads that can execute queries in a single transaction
 class (Monad m, MonadSqlQuery (TransactionM m)) => MonadTransaction m  where
@@ -39,10 +45,13 @@ class (Monad m, MonadSqlQuery (TransactionM m)) => MonadTransaction m  where
   withTransaction :: TransactionM m a -> m a
 
 -- | The type-class for monads that can run persistent database queries.
-class (Monad m) => MonadSqlQuery m where
+class (Monad m, QueryRepresentable (Backend m)) => MonadQuery m where
+  type Backend m :: Type
 
-  -- | Interpret the given SQL query operation.
-  runQueryRep :: Typeable record => SqlQueryRep record a -> m a
+  -- | Interpret the given query operation.
+  runQueryRep :: Typeable record => QueryRep (Backend m) record a -> m a
+
+type MonadSqlQuery m = (MonadQuery m, Backend m ~ SqlBackend)
 
 {- Instances for common monad transformers -}
 
@@ -50,69 +59,79 @@ instance MonadTransaction m => MonadTransaction (Reader.ReaderT r m) where
   type TransactionM (Reader.ReaderT r m) = TransactionM m
   withTransaction = lift . withTransaction
 
-instance MonadSqlQuery m => MonadSqlQuery (Reader.ReaderT r m) where
+instance MonadQuery m => MonadQuery (Reader.ReaderT r m) where
+  type Backend (Reader.ReaderT r m) = Backend m
   runQueryRep = lift . runQueryRep
 
 instance MonadTransaction m => MonadTransaction (Except.ExceptT e m) where
   type TransactionM (Except.ExceptT e m) = TransactionM m
   withTransaction = lift . withTransaction
 
-instance MonadSqlQuery m => MonadSqlQuery (Except.ExceptT e m) where
+instance MonadQuery m => MonadQuery (Except.ExceptT e m) where
+  type Backend (Except.ExceptT e m) = Backend m
   runQueryRep = lift . runQueryRep
 
 instance MonadTransaction m => MonadTransaction (Identity.IdentityT m) where
   type TransactionM (Identity.IdentityT m) = TransactionM m
   withTransaction = lift . withTransaction
 
-instance MonadSqlQuery m => MonadSqlQuery (Identity.IdentityT m) where
+instance MonadQuery m => MonadQuery (Identity.IdentityT m) where
+  type Backend (Identity.IdentityT m) = Backend m
   runQueryRep = lift . runQueryRep
 
 instance MonadTransaction m => MonadTransaction (Maybe.MaybeT m) where
   type TransactionM (Maybe.MaybeT m) = TransactionM m
   withTransaction = lift . withTransaction
 
-instance MonadSqlQuery m => MonadSqlQuery (Maybe.MaybeT m) where
+instance MonadQuery m => MonadQuery (Maybe.MaybeT m) where
+  type Backend (Maybe.MaybeT m) = Backend m
   runQueryRep = lift . runQueryRep
 
 instance (Monoid w, MonadTransaction m) => MonadTransaction (RWS.Lazy.RWST r w s m) where
   type TransactionM (RWS.Lazy.RWST r w s m) = TransactionM m
   withTransaction = lift . withTransaction
 
-instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (RWS.Lazy.RWST r w s m) where
+instance (Monoid w, MonadQuery m) => MonadQuery (RWS.Lazy.RWST r w s m) where
+  type Backend (RWS.Lazy.RWST r w s m) = Backend m
   runQueryRep = lift . runQueryRep
 
 instance (Monoid w, MonadTransaction m) => MonadTransaction (RWS.Strict.RWST r w s m) where
   type TransactionM (RWS.Strict.RWST r w s m) = TransactionM m
   withTransaction = lift . withTransaction
 
-instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (RWS.Strict.RWST r w s m) where
+instance (Monoid w, MonadQuery m) => MonadQuery (RWS.Strict.RWST r w s m) where
+  type Backend (RWS.Strict.RWST r w s m) = Backend m
   runQueryRep = lift . runQueryRep
 
 instance MonadTransaction m => MonadTransaction (State.Lazy.StateT s m) where
   type TransactionM (State.Lazy.StateT s m) = TransactionM m
   withTransaction = lift . withTransaction
 
-instance MonadSqlQuery m => MonadSqlQuery (State.Lazy.StateT s m) where
+instance MonadQuery m => MonadQuery (State.Lazy.StateT s m) where
+  type Backend (State.Lazy.StateT s m) = Backend m
   runQueryRep = lift . runQueryRep
 
 instance MonadTransaction m => MonadTransaction (State.Strict.StateT s m) where
   type TransactionM (State.Strict.StateT s m) = TransactionM m
   withTransaction = lift . withTransaction
 
-instance MonadSqlQuery m => MonadSqlQuery (State.Strict.StateT s m) where
+instance MonadQuery m => MonadQuery (State.Strict.StateT s m) where
+  type Backend (State.Strict.StateT s m) = Backend m
   runQueryRep = lift . runQueryRep
 
 instance (Monoid w, MonadTransaction m) => MonadTransaction (Writer.Lazy.WriterT w m) where
   type TransactionM (Writer.Lazy.WriterT w m) = TransactionM m
   withTransaction = lift . withTransaction
 
-instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (Writer.Lazy.WriterT w m) where
+instance (Monoid w, MonadQuery m) => MonadQuery (Writer.Lazy.WriterT w m) where
+  type Backend (Writer.Lazy.WriterT w m) = Backend m
   runQueryRep = lift . runQueryRep
 
 instance (Monoid w, MonadTransaction m) => MonadTransaction (Writer.Strict.WriterT w m) where
   type TransactionM (Writer.Strict.WriterT w m) = TransactionM m
   withTransaction = lift . withTransaction
 
-instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (Writer.Strict.WriterT w m) where
+instance (Monoid w, MonadQuery m) => MonadQuery (Writer.Strict.WriterT w m) where
+  type Backend (Writer.Strict.WriterT w m) = Backend m
   runQueryRep = lift . runQueryRep
 
