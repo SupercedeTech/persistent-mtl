@@ -53,6 +53,7 @@ module Database.Persist.Monad
   (
   -- * Type class for executing database queries
     MonadSqlQuery
+  , MonadTransaction
   , withTransaction
 
   -- * SqlQueryT monad transformer
@@ -117,14 +118,15 @@ instance
   => MonadIO (SqlTransaction m) where
   liftIO = undefined
 
-instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) where
+instance MonadTransaction m => MonadTransaction (SqlTransaction m) where
   type TransactionM (SqlTransaction m) = TransactionM m
-
-  runQueryRep = SqlTransaction . runSqlQueryRep
 
   -- Delegate to 'm', since 'm' is in charge of starting/stopping transactions.
   -- 'SqlTransaction' is ONLY in charge of executing queries.
   withTransaction = SqlTransaction . withTransaction
+
+instance (MonadSqlQuery m, MonadUnliftIO m) => MonadSqlQuery (SqlTransaction m) where
+  runQueryRep = SqlTransaction . runSqlQueryRep
 
 runSqlTransaction :: MonadUnliftIO m => SqlBackend -> SqlTransaction m a -> m a
 runSqlTransaction conn = (`runSqlConn` conn) . unSqlTransaction
@@ -199,11 +201,8 @@ newtype SqlQueryT m a = SqlQueryT
     , MonadLogger
     )
 
-instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
+instance MonadUnliftIO m => MonadTransaction (SqlQueryT m) where
   type TransactionM (SqlQueryT m) = SqlTransaction (SqlQueryT m)
-
-  -- Running a query directly in SqlQueryT will create a one-off transaction.
-  runQueryRep = withTransaction . runQueryRep
 
   -- Start a new transaction and run the given 'SqlTransaction'
   withTransaction m = do
@@ -217,6 +216,11 @@ instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
                 loop $! i + 1
               else throwIO RetryLimitExceeded
       in loop 0
+
+
+instance MonadUnliftIO m => MonadSqlQuery (SqlQueryT m) where
+  -- Running a query directly in SqlQueryT will create a one-off transaction.
+  runQueryRep = withTransaction . runQueryRep
 
 instance MonadUnliftIO m => MonadUnliftIO (SqlQueryT m) where
   withRunInIO = wrappedWithRunInIO SqlQueryT unSqlQueryT

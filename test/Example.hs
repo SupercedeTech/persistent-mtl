@@ -103,6 +103,7 @@ newtype TestApp a = TestApp
     , MonadIO
     , MonadRerunnableIO
     , MonadSqlQuery
+    , MonadTransaction
     , MonadResource
     )
 
