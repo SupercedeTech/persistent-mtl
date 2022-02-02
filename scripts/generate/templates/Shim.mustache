@@ -31,7 +31,7 @@ import Database.Persist.Sql hiding (pattern Update)
 import GHC.Stack (HasCallStack)
 
 import Database.Persist.Monad.Class (MonadSqlQuery(..))
-import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
+import Database.Persist.Monad.SqlQueryRep (QueryRep(..))
 
 {-# ANN module "HLint: ignore" #-}
 

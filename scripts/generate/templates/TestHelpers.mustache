@@ -14,7 +14,7 @@ import Data.Text (Text)
 import Data.Void (Void)
 import Database.Persist.Sql (CautiousMigration, Entity, Key, PersistValue, Sql)
 
-import Database.Persist.Monad.TestUtils (SqlQueryRep(..))
+import Database.Persist.Monad.TestUtils (QueryRep(..), SqlQueryRep)
 import Example
 
 {-# ANN module "HLint: ignore" #-}

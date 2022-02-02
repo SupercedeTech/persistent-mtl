@@ -28,7 +28,8 @@ module Database.Persist.Monad.TestUtils
   , mockRawSql
 
   -- * Re-exports
-  , SqlQueryRep(..)
+  , QueryRep(..)
+  , SqlQueryRep
   ) where
 
 import Conduit ((.|))
@@ -45,7 +46,7 @@ import Database.Persist.Sql
     (Entity, Filter, Key, PersistValue, SelectOpt, rawSqlProcessRow)
 
 import Database.Persist.Monad.Class (MonadSqlQuery(..))
-import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
+import Database.Persist.Monad.SqlQueryRep (QueryRep(..), SqlQueryRep)
 
 -- | A monad transformer for testing functions that use 'MonadSqlQuery'.
 newtype MockSqlQueryT m a = MockSqlQueryT
