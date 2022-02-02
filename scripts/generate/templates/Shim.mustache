@@ -30,7 +30,7 @@ import Data.Void (Void)
 import Database.Persist.Sql hiding (pattern Update)
 import GHC.Stack (HasCallStack)
 
-import Database.Persist.Monad.Class (MonadSqlQuery, runQueryRep)
+import Database.Persist.Monad.Class (MonadSqlQuery, runCompatibleQueryRep)
 import Database.Persist.Monad.SqlQueryRep (QueryRep(..))
 
 {-# ANN module "HLint: ignore" #-}
@@ -42,10 +42,10 @@ import Database.Persist.Monad.SqlQueryRep (QueryRep(..))
   :: ({{#constraints}}{{{type}}}, {{/constraints}}{{#recordTypeVars}}Typeable {{.}}, {{/recordTypeVars}}MonadSqlQuery m)
   => {{#args}}{{{type}}} -> {{/args}}{{result}}
 {{#conduitFrom?}}
-{{{name}}} {{#args}}a{{index}} {{/args}}= fromAcquire $ runQueryRep $ {{{conduitFrom.nameCapital}}}{{#args}} a{{index}}{{/args}}
+{{{name}}} {{#args}}a{{index}} {{/args}}= fromAcquire $ runCompatibleQueryRep $ {{{conduitFrom.nameCapital}}}{{#args}} a{{index}}{{/args}}
 {{/conduitFrom?}}
 {{^conduitFrom?}}
-{{{name}}} {{#args}}a{{index}} {{/args}}= runQueryRep $ {{{nameCapital}}}{{#args}} a{{index}}{{/args}}
+{{{name}}} {{#args}}a{{index}} {{/args}}= runCompatibleQueryRep $ {{{nameCapital}}}{{#args}} a{{index}}{{/args}}
 {{/conduitFrom?}}
 {{/withCondition}}
 
@@ -64,7 +64,7 @@ import Database.Persist.Monad.SqlQueryRep (QueryRep(..))
 -- select q = unsafeLiftSql "esqueleto-select" (E.select q)
 -- @
 unsafeLiftSql :: MonadSqlQuery m => Text -> (forall m2. MonadIO m2 => SqlPersistT m2 a) -> m a
-unsafeLiftSql label action = runQueryRep $ UnsafeLiftSql label action
+unsafeLiftSql label action = runCompatibleQueryRep $ UnsafeLiftSql label action
 
 {- Helpers -}
 

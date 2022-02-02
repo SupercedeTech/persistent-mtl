@@ -18,6 +18,7 @@ module Database.Persist.Monad.Class
   ( MonadTransaction(..)
   , MonadQuery(..)
   , MonadSqlQuery
+  , runCompatibleQueryRep
   ) where
 
 import Control.Monad.Trans.Class (lift)
@@ -35,7 +36,7 @@ import Data.Kind (Type)
 import Data.Typeable (Typeable)
 import Database.Persist.Sql
 
-import Database.Persist.Monad.SqlQueryRep (QueryRepresentable(..))
+import Database.Persist.Monad.SqlQueryRep (QueryRepresentable(..), QueryRepCompatible(..))
 
 -- | The type-class for monads that can execute queries in a single transaction
 class (Monad m, MonadSqlQuery (TransactionM m)) => MonadTransaction m  where
@@ -51,7 +52,13 @@ class (Monad m, QueryRepresentable (Backend m)) => MonadQuery m where
   -- | Interpret the given query operation.
   runQueryRep :: Typeable record => QueryRep (Backend m) record a -> m a
 
-type MonadSqlQuery m = (MonadQuery m, Backend m ~ SqlBackend)
+type MonadSqlQuery m = (MonadQuery m, QueryRepCompatible SqlBackend (Backend m))
+
+runCompatibleQueryRep
+  :: (MonadQuery m, QueryRepCompatible backend (Backend m), Typeable record)
+  => QueryRep backend record a
+  -> m a
+runCompatibleQueryRep = runQueryRep . projectQueryRep
 
 {- Instances for common monad transformers -}
 
