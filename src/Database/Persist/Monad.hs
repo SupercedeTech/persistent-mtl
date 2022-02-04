@@ -124,7 +124,7 @@ instance MonadTransaction m => MonadTransaction (SqlTransaction m) where
 
   -- Delegate to 'm', since 'm' is in charge of starting/stopping transactions.
   -- 'SqlTransaction' is ONLY in charge of executing queries.
-  withTransaction = SqlTransaction . withTransaction
+  withTransaction = SqlTransaction . lift . withTransaction
 
 instance (MonadSqlQuery m, MonadUnliftIO m) => MonadQuery (SqlTransaction m) where
   type Backend (SqlTransaction m) = SqlBackend

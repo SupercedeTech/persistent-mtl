@@ -35,6 +35,7 @@ library
       Control.Monad.IO.Rerunnable
       Database.Persist.Monad
       Database.Persist.Monad.Class
+      Database.Persist.Monad.Orphan.TransactionLift
       Database.Persist.Monad.Shim
       Database.Persist.Monad.SqlQueryRep
       Database.Persist.Monad.TestUtils

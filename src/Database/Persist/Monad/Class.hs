@@ -62,83 +62,42 @@ runCompatibleQueryRep = runQueryRep . projectQueryRep
 
 {- Instances for common monad transformers -}
 
-instance MonadTransaction m => MonadTransaction (Reader.ReaderT r m) where
-  type TransactionM (Reader.ReaderT r m) = TransactionM m
-  withTransaction = lift . withTransaction
-
 instance MonadQuery m => MonadQuery (Reader.ReaderT r m) where
   type Backend (Reader.ReaderT r m) = Backend m
   runQueryRep = lift . runQueryRep
-
-instance MonadTransaction m => MonadTransaction (Except.ExceptT e m) where
-  type TransactionM (Except.ExceptT e m) = TransactionM m
-  withTransaction = lift . withTransaction
 
 instance MonadQuery m => MonadQuery (Except.ExceptT e m) where
   type Backend (Except.ExceptT e m) = Backend m
   runQueryRep = lift . runQueryRep
 
-instance MonadTransaction m => MonadTransaction (Identity.IdentityT m) where
-  type TransactionM (Identity.IdentityT m) = TransactionM m
-  withTransaction = lift . withTransaction
-
 instance MonadQuery m => MonadQuery (Identity.IdentityT m) where
   type Backend (Identity.IdentityT m) = Backend m
   runQueryRep = lift . runQueryRep
-
-instance MonadTransaction m => MonadTransaction (Maybe.MaybeT m) where
-  type TransactionM (Maybe.MaybeT m) = TransactionM m
-  withTransaction = lift . withTransaction
 
 instance MonadQuery m => MonadQuery (Maybe.MaybeT m) where
   type Backend (Maybe.MaybeT m) = Backend m
   runQueryRep = lift . runQueryRep
 
-instance (Monoid w, MonadTransaction m) => MonadTransaction (RWS.Lazy.RWST r w s m) where
-  type TransactionM (RWS.Lazy.RWST r w s m) = TransactionM m
-  withTransaction = lift . withTransaction
-
 instance (Monoid w, MonadQuery m) => MonadQuery (RWS.Lazy.RWST r w s m) where
   type Backend (RWS.Lazy.RWST r w s m) = Backend m
   runQueryRep = lift . runQueryRep
-
-instance (Monoid w, MonadTransaction m) => MonadTransaction (RWS.Strict.RWST r w s m) where
-  type TransactionM (RWS.Strict.RWST r w s m) = TransactionM m
-  withTransaction = lift . withTransaction
 
 instance (Monoid w, MonadQuery m) => MonadQuery (RWS.Strict.RWST r w s m) where
   type Backend (RWS.Strict.RWST r w s m) = Backend m
   runQueryRep = lift . runQueryRep
 
-instance MonadTransaction m => MonadTransaction (State.Lazy.StateT s m) where
-  type TransactionM (State.Lazy.StateT s m) = TransactionM m
-  withTransaction = lift . withTransaction
-
 instance MonadQuery m => MonadQuery (State.Lazy.StateT s m) where
   type Backend (State.Lazy.StateT s m) = Backend m
   runQueryRep = lift . runQueryRep
-
-instance MonadTransaction m => MonadTransaction (State.Strict.StateT s m) where
-  type TransactionM (State.Strict.StateT s m) = TransactionM m
-  withTransaction = lift . withTransaction
 
 instance MonadQuery m => MonadQuery (State.Strict.StateT s m) where
   type Backend (State.Strict.StateT s m) = Backend m
   runQueryRep = lift . runQueryRep
 
-instance (Monoid w, MonadTransaction m) => MonadTransaction (Writer.Lazy.WriterT w m) where
-  type TransactionM (Writer.Lazy.WriterT w m) = TransactionM m
-  withTransaction = lift . withTransaction
-
 instance (Monoid w, MonadQuery m) => MonadQuery (Writer.Lazy.WriterT w m) where
   type Backend (Writer.Lazy.WriterT w m) = Backend m
   runQueryRep = lift . runQueryRep
 
-instance (Monoid w, MonadTransaction m) => MonadTransaction (Writer.Strict.WriterT w m) where
-  type TransactionM (Writer.Strict.WriterT w m) = TransactionM m
-  withTransaction = lift . withTransaction
-
 instance (Monoid w, MonadQuery m) => MonadQuery (Writer.Strict.WriterT w m) where
   type Backend (Writer.Strict.WriterT w m) = Backend m
   runQueryRep = lift . runQueryRep
-
