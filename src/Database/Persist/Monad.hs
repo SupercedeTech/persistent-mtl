@@ -55,6 +55,7 @@ module Database.Persist.Monad
     MonadQuery
   , MonadSqlQuery
   , MonadTransaction
+  , MonadSqlTransaction
   , withTransaction
 
   -- * SqlQueryT monad transformer

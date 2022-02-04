@@ -19,7 +19,7 @@ tests = testGroup "Basic functionality tests"
           foo = insert_ $ person "Alice"
           bar :: MonadSqlQuery m => m ()
           bar = insert_ $ person "Bob"
-          fooAndBar :: MonadTransaction m => m ()
+          fooAndBar :: MonadSqlTransaction m => m ()
           fooAndBar = withTransaction $ foo >> bar
       runMockSqlQueryT fooAndBar
         [ withRecord @Person $ \case

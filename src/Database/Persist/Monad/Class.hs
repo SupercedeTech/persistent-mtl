@@ -17,6 +17,7 @@ in order to interpret how to run a
 module Database.Persist.Monad.Class
   ( MonadTransaction(..)
   , MonadQuery(..)
+  , MonadSqlTransaction
   , MonadSqlQuery
   , runCompatibleQueryRep
   ) where
@@ -39,11 +40,13 @@ import Database.Persist.Sql
 import Database.Persist.Monad.SqlQueryRep (QueryRepresentable(..), QueryRepCompatible(..))
 
 -- | The type-class for monads that can execute queries in a single transaction
-class (Monad m, MonadSqlQuery (TransactionM m)) => MonadTransaction m  where
+class (Monad m, MonadQuery (TransactionM m)) => MonadTransaction m  where
   type TransactionM m :: Type -> Type
 
   -- | Run all queries in the given action using the same database connection.
   withTransaction :: TransactionM m a -> m a
+
+type MonadSqlTransaction m = (MonadTransaction m, QueryRepCompatible SqlBackend (Backend (TransactionM m)))
 
 -- | The type-class for monads that can run persistent database queries.
 class (Monad m, QueryRepresentable (Backend m)) => MonadQuery m where
