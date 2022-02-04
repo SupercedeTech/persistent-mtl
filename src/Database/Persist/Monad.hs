@@ -84,7 +84,6 @@ import Control.Monad.Reader.Class (MonadReader(..))
 import Control.Monad.Trans.Class (MonadTrans(..))
 import Control.Monad.Trans.Resource (MonadResource)
 import Data.Pool (Pool)
-import Database.Persist.Sql (SqlBackend, SqlPersistT, runSqlConn)
 import qualified GHC.TypeLits as GHC
 import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Exception (Exception, SomeException, catchJust, throwIO)

@@ -43,8 +43,6 @@ module Example
 import Control.Arrow ((&&&))
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Trans.Resource (MonadResource, ResourceT, runResourceT)
-import Database.Persist.Sql
-    (Entity(..), EntityField, Key, SelectOpt(..), Unique, toSqlKey)
 import Database.Persist.TH
     (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
 #if !MIN_VERSION_persistent(2,13,0)

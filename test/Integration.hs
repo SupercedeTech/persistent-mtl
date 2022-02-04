@@ -21,21 +21,6 @@ import qualified Database.Esqueleto.Experimental as E
 #else
 import qualified Database.Esqueleto as E
 #endif
-import Database.Persist.Sql
-    ( Entity(..)
-    , Migration
-    , PersistField
-    , PersistRecordBackend
-    , PersistValue
-    , Single(..)
-    , SqlBackend
-    , fromPersistValue
-    , (=.)
-    , (==.)
-    )
-#if MIN_VERSION_persistent(2,9,0)
-import Database.Persist.Sql (IsolationLevel(..))
-#endif
 import Test.Predicates (anything, elemsAre, eq, right)
 import Test.Predicates.HUnit ((@?~))
 import Test.Tasty
