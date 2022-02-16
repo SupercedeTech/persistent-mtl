@@ -105,7 +105,6 @@ allSqlQueryRepShowRepresentations =
 #if MIN_VERSION_persistent(2,10,2)
   , show (RunMigrationQuiet undefined :: SqlQueryRep Void [Text])
 #endif
-  , show (RunMigrationSilent undefined :: SqlQueryRep Void [Text])
   , show (RunMigrationUnsafe undefined :: SqlQueryRep Void ())
 #if MIN_VERSION_persistent(2,10,2)
   , show (RunMigrationUnsafeQuiet undefined :: SqlQueryRep Void [Text])

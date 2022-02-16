@@ -33,7 +33,6 @@ module Database.Persist.Monad.SqlQueryRep
   ) where
 
 import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Acquire (Acquire)
 import Data.Conduit (ConduitM)
 import Data.Int (Int64)
@@ -408,11 +407,6 @@ instance QueryRepresentable SqlBackend where
       => Migration -> SqlQueryRep Void [Text]
 #endif
 
-    -- | Constructor corresponding to 'Persist.runMigrationSilent'
-    RunMigrationSilent
-      :: ()
-      => Migration -> SqlQueryRep Void [Text]
-
     -- | Constructor corresponding to 'Persist.runMigrationUnsafe'
     RunMigrationUnsafe
       :: ()
@@ -576,7 +570,6 @@ instance Typeable record => Show (SqlQueryRep record a) where
 #if MIN_VERSION_persistent(2,10,2)
     RunMigrationQuiet{} -> "RunMigrationQuiet{..}" ++ record
 #endif
-    RunMigrationSilent{} -> "RunMigrationSilent{..}" ++ record
     RunMigrationUnsafe{} -> "RunMigrationUnsafe{..}" ++ record
 #if MIN_VERSION_persistent(2,10,2)
     RunMigrationUnsafeQuiet{} -> "RunMigrationUnsafeQuiet{..}" ++ record
@@ -607,7 +600,7 @@ instance Typeable record => Show (SqlQueryRep record a) where
 
 -- | A helper to execute the actual @persistent@ function corresponding to
 -- each 'SqlQueryRep' data constructor.
-runSqlQueryRep :: MonadUnliftIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
+runSqlQueryRep :: MonadIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
 runSqlQueryRep = \case
   Get a1 -> Persist.get a1
   GetMany a1 -> Persist.getMany a1
@@ -693,7 +686,6 @@ runSqlQueryRep = \case
 #if MIN_VERSION_persistent(2,10,2)
   RunMigrationQuiet a1 -> Persist.runMigrationQuiet a1
 #endif
-  RunMigrationSilent a1 -> Persist.runMigrationSilent a1
   RunMigrationUnsafe a1 -> Persist.runMigrationUnsafe a1
 #if MIN_VERSION_persistent(2,10,2)
   RunMigrationUnsafeQuiet a1 -> Persist.runMigrationUnsafeQuiet a1

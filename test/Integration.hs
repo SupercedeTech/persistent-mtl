@@ -670,27 +670,15 @@ testPersistentAPI backendType = testGroup "Persistent API"
 
 #if MIN_VERSION_persistent(2,10,2)
   , testCase "runMigrationQuiet" $ do
-      (withQuiet, cols) <- runTestApp backendType $ do
-        setupSafeMigration
-        sql <- runMigrationQuiet migration
-        cols <- getSchemaColumnNames backendType "person"
-        return (sql, cols)
-      withSilent <- runTestApp backendType $ do
-        setupSafeMigration
-        runMigrationSilent migration
-      assertNotIn "removed_column" cols
-      withQuiet @?= withSilent
-#endif
-
-  , testCase "runMigrationSilent" $ do
       (sqlPlanned, sqlExecuted, cols) <- runTestApp backendType $ do
         setupSafeMigration
         sqlPlanned <- getMigration migration
-        sqlExecuted <- runMigrationSilent migration
+        sqlExecuted <- runMigrationQuiet migration
         cols <- getSchemaColumnNames backendType "person"
         return (sqlPlanned, sqlExecuted, cols)
       assertNotIn "removed_column" cols
       sqlExecuted @?= sqlPlanned
+#endif
 
   , testCase "runMigrationUnsafe" $ do
       result <- runTestApp backendType $ do

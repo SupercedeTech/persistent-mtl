@@ -105,7 +105,6 @@ module Database.Persist.Monad.Shim (
 #if MIN_VERSION_persistent(2,10,2)
   runMigrationQuiet,
 #endif
-  runMigrationSilent,
   runMigrationUnsafe,
 #if MIN_VERSION_persistent(2,10,2)
   runMigrationUnsafeQuiet,
@@ -226,7 +225,6 @@ import Database.Persist.Sql hiding (
 #if MIN_VERSION_persistent(2,10,2)
   runMigrationQuiet,
 #endif
-  runMigrationSilent,
   runMigrationUnsafe,
 #if MIN_VERSION_persistent(2,10,2)
   runMigrationUnsafeQuiet,
@@ -641,12 +639,6 @@ runMigrationQuiet
   => Migration -> m [Text]
 runMigrationQuiet a1 = runCompatibleQueryRep $ RunMigrationQuiet a1
 #endif
-
--- | The lifted version of 'Database.Persist.Sql.runMigrationSilent'
-runMigrationSilent
-  :: (MonadSqlQuery m)
-  => Migration -> m [Text]
-runMigrationSilent a1 = runCompatibleQueryRep $ RunMigrationSilent a1
 
 -- | The lifted version of 'Database.Persist.Sql.runMigrationUnsafe'
 runMigrationUnsafe
