@@ -27,9 +27,8 @@ module Database.Persist.Monad.Class
 
 import Data.Kind (Type)
 import Data.Typeable (Typeable)
-import Database.Persist.Sql
 
-import Database.Persist.Monad.SqlQueryRep (QueryRepresentable(..), QueryRepCompatible(..))
+import Database.Persist.Monad.SqlQueryRep (QueryRepCompatible(..), SqlQueryRep)
 
 -- | The type-class for monads that can execute queries in a single transaction
 class (Monad m, MonadQuery (TransactionM m)) => MonadTransaction m  where
@@ -38,52 +37,51 @@ class (Monad m, MonadQuery (TransactionM m)) => MonadTransaction m  where
   -- | Run all queries in the given action using the same database connection.
   withTransaction :: TransactionM m a -> m a
 
-type MonadSqlTransaction m = (MonadTransaction m, QueryRepCompatible SqlBackend (Backend (TransactionM m)))
+type MonadSqlTransaction m = (MonadTransaction m, QueryRepCompatible SqlQueryRep (QueryRep (TransactionM m)))
 
 -- | The type-class for monads that can run persistent database queries.
-class (Monad m, QueryRepresentable (Backend m)) => MonadQuery m where
-  type Backend m :: Type
+class (Monad m) => MonadQuery m where
+  type QueryRep m :: Type -> Type -> Type
 
   -- | Interpret the given query operation.
-  runQueryRep :: Typeable record => QueryRep (Backend m) record a -> m a
+  runQueryRep :: Typeable record => QueryRep m record a -> m a
 
-type MonadSqlQuery m = (MonadQuery m, QueryRepCompatible SqlBackend (Backend m))
+type MonadSqlQuery m = (MonadQuery m, QueryRepCompatible SqlQueryRep (QueryRep m))
 
 runCompatibleQueryRep
-  :: (MonadQuery m, QueryRepCompatible backend (Backend m), Typeable record)
-  => QueryRep backend record a
+  :: (MonadQuery m, QueryRepCompatible rep (QueryRep m), Typeable record)
+  => rep record a
   -> m a
 runCompatibleQueryRep = runQueryRep . projectQueryRep
 
 -- | A helpful monad wrapper for running a particular DB function "via" a
 -- compatible backend, rather than the current one.
 --
--- 'MonadQuery' specifies a specific 'Backend' type for each monad. But
+-- 'MonadQuery' specifies a specific 'QueryRep' type for each monad. But
 -- classy DB functions (like ones that constrain by 'MonadSqlQuery') allow for
--- any backend type, provided it is 'QueryRepCompatible' with the backend
--- they actually want to use the features of - like, say, 'SqlBackend'.
+-- any query representation, provided it is 'QueryRepCompatible' with the
+-- query representation they actually want to use - like, say, 'SqlQueryRep'.
 --
 -- So in a function that wants
--- @('MonadQuery m', 'QueryRepCompatible' MyBackend ('Backend' m))@
+-- @('MonadQuery m', 'QueryRepCompatible' MyQueryRep ('QueryRep' m))@
 -- if we try to call a function that constrains by
--- @('MonadQuery m', 'QueryRepCompatible' MyOtherBackend ('Backend' m))@
+-- @('MonadQuery m', 'QueryRepCompatible' MyOtherRep ('QueryRep' m))@
 -- we will be told that the compiler cannot determine
--- @'QueryRepCompatible' MyOtherBackend ('Backend' m)@
--- even if 'MyBackend' and 'MyOtherBackend' *are* compatible. In this case,
+-- @'QueryRepCompatible' MyOtherRep ('QueryRep' m)@
+-- even if 'MyQueryRep' and 'MyOtherRep' *are* compatible. In this case,
 -- polymorphism is a problem: the type doesn't know that it should first
--- convert @'Backend' m@ to a @MyBackend@, and then @MyBackend@ to a
--- @MyOtherBackend@. We have to guide it there, which 'runVia' lets us do.
+-- convert @'QueryRep' m@ to a @MyQueryRep@, and then @MyQueryRep@ to a
+-- @MyOtherRep@. We have to guide it there, which 'runVia' lets us do.
 --
--- In the above example, we would use @'runVia' \@MyBackend $ ...@ to call
+-- In the above example, we would use @'runVia' \@MyQueryRep$ ...@ to call
 -- the second function, to tell the compiler that we want to use the
--- compatibility between @MyBackend@ and @MyOtherBackend@.
-newtype Via sub m a = Via { runVia :: m a }
+-- compatibility between @MyQueryRep@ and @MyOtherRep@.
+newtype Via (sub :: Type -> Type -> Type) m a = Via { runVia :: m a }
   deriving newtype (Functor, Applicative, Monad)
 
 instance
   ( MonadQuery m
-  , QueryRepresentable sub
-  , QueryRepCompatible sub (Backend m)
+  , QueryRepCompatible sub (QueryRep m)
   ) => MonadQuery (Via sub m) where
-  type Backend (Via sub m) = sub
+  type QueryRep (Via sub m) = sub
   runQueryRep = Via . runCompatibleQueryRep

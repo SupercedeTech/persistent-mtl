@@ -29,8 +29,7 @@ module Database.Persist.Monad.TestUtils
   , mockRawSql
 
   -- * Re-exports
-  , QueryRep(..)
-  , SqlQueryRep
+  , SqlQueryRep(..)
   ) where
 
 import Conduit ((.|))
@@ -44,10 +43,10 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Typeable (Typeable, eqT, (:~:)(..))
 import Database.Persist.Sql
-    (Entity, Filter, Key, PersistValue, SelectOpt, SqlBackend, rawSqlProcessRow)
+    (Entity, Filter, Key, PersistValue, SelectOpt, rawSqlProcessRow)
 
 import Database.Persist.Monad.Class (MonadQuery(..), MonadTransaction(..))
-import Database.Persist.Monad.SqlQueryRep (QueryRep(..), SqlQueryRep)
+import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
 
 -- | A monad transformer for testing functions that use 'MonadSqlQuery'.
 newtype MockSqlQueryT m a = MockSqlQueryT
@@ -96,7 +95,7 @@ instance MonadIO m => MonadTransaction (MockSqlQueryT m) where
   withTransaction = id
 
 instance MonadIO m => MonadQuery (MockSqlQueryT m) where
-  type Backend (MockSqlQueryT m) = SqlBackend
+  type QueryRep (MockSqlQueryT m) = SqlQueryRep
   runQueryRep rep = do
     mockQueries <- MockSqlQueryT ask
     maybe (error $ "Could not find mock for query: " ++ show rep) liftIO

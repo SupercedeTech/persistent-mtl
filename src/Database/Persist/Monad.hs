@@ -127,7 +127,7 @@ instance MonadTransaction m => MonadTransaction (SqlTransaction m) where
   withTransaction = SqlTransaction . lift . withTransaction
 
 instance (MonadSqlQuery m, MonadUnliftIO m) => MonadQuery (SqlTransaction m) where
-  type Backend (SqlTransaction m) = SqlBackend
+  type QueryRep (SqlTransaction m) = SqlQueryRep
   runQueryRep = SqlTransaction . runSqlQueryRep
 
 runSqlTransaction :: MonadUnliftIO m => SqlBackend -> SqlTransaction m a -> m a
@@ -221,7 +221,7 @@ instance MonadUnliftIO m => MonadTransaction (SqlQueryT m) where
 
 
 instance MonadUnliftIO m => MonadQuery (SqlQueryT m) where
-  type Backend (SqlQueryT m) = SqlBackend
+  type QueryRep (SqlQueryT m) = SqlQueryRep
 
   -- Running a query directly in SqlQueryT will create a one-off transaction.
   runQueryRep = withTransaction . runQueryRep
