@@ -50,7 +50,6 @@ ShowMigration{..}
 GetMigration{..}
 RunMigration{..}
 RunMigrationQuiet{..}
-RunMigrationSilent{..}
 RunMigrationUnsafe{..}
 RunMigrationUnsafeQuiet{..}
 GetFieldName{..}<Person>

@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
@@ -19,21 +20,6 @@ import Data.Typeable (Typeable)
 import qualified Database.Esqueleto.Experimental as E
 #else
 import qualified Database.Esqueleto as E
-#endif
-import Database.Persist.Sql
-    ( Entity(..)
-    , Migration
-    , PersistField
-    , PersistRecordBackend
-    , PersistValue
-    , Single(..)
-    , SqlBackend
-    , fromPersistValue
-    , (=.)
-    , (==.)
-    )
-#if MIN_VERSION_persistent(2,9,0)
-import Database.Persist.Sql (IsolationLevel(..))
 #endif
 import Test.Predicates (anything, elemsAre, eq, right)
 import Test.Predicates.HUnit ((@?~))
@@ -684,27 +670,15 @@ testPersistentAPI backendType = testGroup "Persistent API"
 
 #if MIN_VERSION_persistent(2,10,2)
   , testCase "runMigrationQuiet" $ do
-      (withQuiet, cols) <- runTestApp backendType $ do
-        setupSafeMigration
-        sql <- runMigrationQuiet migration
-        cols <- getSchemaColumnNames backendType "person"
-        return (sql, cols)
-      withSilent <- runTestApp backendType $ do
-        setupSafeMigration
-        runMigrationSilent migration
-      assertNotIn "removed_column" cols
-      withQuiet @?= withSilent
-#endif
-
-  , testCase "runMigrationSilent" $ do
       (sqlPlanned, sqlExecuted, cols) <- runTestApp backendType $ do
         setupSafeMigration
         sqlPlanned <- getMigration migration
-        sqlExecuted <- runMigrationSilent migration
+        sqlExecuted <- runMigrationQuiet migration
         cols <- getSchemaColumnNames backendType "person"
         return (sqlPlanned, sqlExecuted, cols)
       assertNotIn "removed_column" cols
       sqlExecuted @?= sqlPlanned
+#endif
 
   , testCase "runMigrationUnsafe" $ do
       result <- runTestApp backendType $ do

@@ -6,88 +6,82 @@ in order to interpret how to run a
 'Database.Persist.Monad.SqlQueryRep.SqlQueryRep' sent by a lifted function from
 @Database.Persist.Monad.Shim@.
 -}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE UndecidableSuperClasses #-}
 
 module Database.Persist.Monad.Class
-  ( MonadSqlQuery(..)
+  ( MonadTransaction(..)
+  , MonadQuery(..)
+  , MonadSqlTransaction
+  , MonadSqlQuery
+  , runCompatibleQueryRep
+  , Via(..)
   ) where
 
-import Control.Monad.Trans.Class (lift)
-import qualified Control.Monad.Trans.Except as Except
-import qualified Control.Monad.Trans.Identity as Identity
-import qualified Control.Monad.Trans.Maybe as Maybe
-import qualified Control.Monad.Trans.RWS.Lazy as RWS.Lazy
-import qualified Control.Monad.Trans.RWS.Strict as RWS.Strict
-import qualified Control.Monad.Trans.Reader as Reader
-import qualified Control.Monad.Trans.State.Lazy as State.Lazy
-import qualified Control.Monad.Trans.State.Strict as State.Strict
-import qualified Control.Monad.Trans.Writer.Lazy as Writer.Lazy
-import qualified Control.Monad.Trans.Writer.Strict as Writer.Strict
 import Data.Kind (Type)
 import Data.Typeable (Typeable)
 
-import Database.Persist.Monad.SqlQueryRep (SqlQueryRep)
+import Database.Persist.Monad.SqlQueryRep (QueryRepCompatible(..), SqlQueryRep)
 
--- | The type-class for monads that can run persistent database queries.
-class (Monad m, MonadSqlQuery (TransactionM m)) => MonadSqlQuery m where
+-- | The type-class for monads that can execute queries in a single transaction
+class (Monad m, MonadQuery (TransactionM m)) => MonadTransaction m  where
   type TransactionM m :: Type -> Type
-
-  -- | Interpret the given SQL query operation.
-  runQueryRep :: Typeable record => SqlQueryRep record a -> m a
 
   -- | Run all queries in the given action using the same database connection.
   withTransaction :: TransactionM m a -> m a
 
-{- Instances for common monad transformers -}
+type MonadSqlTransaction m = (MonadTransaction m, QueryRepCompatible SqlQueryRep (QueryRep (TransactionM m)))
 
-instance MonadSqlQuery m => MonadSqlQuery (Reader.ReaderT r m) where
-  type TransactionM (Reader.ReaderT r m) = TransactionM m
-  runQueryRep = lift . runQueryRep
-  withTransaction = lift . withTransaction
+-- | The type-class for monads that can run persistent database queries.
+class (Monad m) => MonadQuery m where
+  type QueryRep m :: Type -> Type -> Type
 
-instance MonadSqlQuery m => MonadSqlQuery (Except.ExceptT e m) where
-  type TransactionM (Except.ExceptT e m) = TransactionM m
-  runQueryRep = lift . runQueryRep
-  withTransaction = lift . withTransaction
+  -- | Interpret the given query operation.
+  runQueryRep :: Typeable record => QueryRep m record a -> m a
 
-instance MonadSqlQuery m => MonadSqlQuery (Identity.IdentityT m) where
-  type TransactionM (Identity.IdentityT m) = TransactionM m
-  runQueryRep = lift . runQueryRep
-  withTransaction = lift . withTransaction
+type MonadSqlQuery m = (MonadQuery m, QueryRepCompatible SqlQueryRep (QueryRep m))
 
-instance MonadSqlQuery m => MonadSqlQuery (Maybe.MaybeT m) where
-  type TransactionM (Maybe.MaybeT m) = TransactionM m
-  runQueryRep = lift . runQueryRep
-  withTransaction = lift . withTransaction
+runCompatibleQueryRep
+  :: (MonadQuery m, QueryRepCompatible rep (QueryRep m), Typeable record)
+  => rep record a
+  -> m a
+runCompatibleQueryRep = runQueryRep . projectQueryRep
 
-instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (RWS.Lazy.RWST r w s m) where
-  type TransactionM (RWS.Lazy.RWST r w s m) = TransactionM m
-  runQueryRep = lift . runQueryRep
-  withTransaction = lift . withTransaction
+-- | A helpful monad wrapper for running a particular DB function "via" a
+-- compatible backend, rather than the current one.
+--
+-- 'MonadQuery' specifies a specific 'QueryRep' type for each monad. But
+-- classy DB functions (like ones that constrain by 'MonadSqlQuery') allow for
+-- any query representation, provided it is 'QueryRepCompatible' with the
+-- query representation they actually want to use - like, say, 'SqlQueryRep'.
+--
+-- So in a function that wants
+-- @('MonadQuery m', 'QueryRepCompatible' MyQueryRep ('QueryRep' m))@
+-- if we try to call a function that constrains by
+-- @('MonadQuery m', 'QueryRepCompatible' MyOtherRep ('QueryRep' m))@
+-- we will be told that the compiler cannot determine
+-- @'QueryRepCompatible' MyOtherRep ('QueryRep' m)@
+-- even if 'MyQueryRep' and 'MyOtherRep' *are* compatible. In this case,
+-- polymorphism is a problem: the type doesn't know that it should first
+-- convert @'QueryRep' m@ to a @MyQueryRep@, and then @MyQueryRep@ to a
+-- @MyOtherRep@. We have to guide it there, which 'runVia' lets us do.
+--
+-- In the above example, we would use @'runVia' \@MyQueryRep$ ...@ to call
+-- the second function, to tell the compiler that we want to use the
+-- compatibility between @MyQueryRep@ and @MyOtherRep@.
+newtype Via (sub :: Type -> Type -> Type) m a = Via { runVia :: m a }
+  deriving newtype (Functor, Applicative, Monad)
 
-instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (RWS.Strict.RWST r w s m) where
-  type TransactionM (RWS.Strict.RWST r w s m) = TransactionM m
-  runQueryRep = lift . runQueryRep
-  withTransaction = lift . withTransaction
-
-instance MonadSqlQuery m => MonadSqlQuery (State.Lazy.StateT s m) where
-  type TransactionM (State.Lazy.StateT s m) = TransactionM m
-  runQueryRep = lift . runQueryRep
-  withTransaction = lift . withTransaction
-
-instance MonadSqlQuery m => MonadSqlQuery (State.Strict.StateT s m) where
-  type TransactionM (State.Strict.StateT s m) = TransactionM m
-  runQueryRep = lift . runQueryRep
-  withTransaction = lift . withTransaction
-
-instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (Writer.Lazy.WriterT w m) where
-  type TransactionM (Writer.Lazy.WriterT w m) = TransactionM m
-  runQueryRep = lift . runQueryRep
-  withTransaction = lift . withTransaction
-
-instance (Monoid w, MonadSqlQuery m) => MonadSqlQuery (Writer.Strict.WriterT w m) where
-  type TransactionM (Writer.Strict.WriterT w m) = TransactionM m
-  runQueryRep = lift . runQueryRep
-  withTransaction = lift . withTransaction
+instance
+  ( MonadQuery m
+  , QueryRepCompatible sub (QueryRep m)
+  ) => MonadQuery (Via sub m) where
+  type QueryRep (Via sub m) = sub
+  runQueryRep = Via . runCompatibleQueryRep

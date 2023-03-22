@@ -8,6 +8,7 @@ Defines 'MockSqlQueryT', which one can use in tests in order to mock out
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -44,7 +45,7 @@ import Data.Typeable (Typeable, eqT, (:~:)(..))
 import Database.Persist.Sql
     (Entity, Filter, Key, PersistValue, SelectOpt, rawSqlProcessRow)
 
-import Database.Persist.Monad.Class (MonadSqlQuery(..))
+import Database.Persist.Monad.Class (MonadQuery(..), MonadTransaction(..))
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
 
 -- | A monad transformer for testing functions that use 'MonadSqlQuery'.
@@ -89,17 +90,18 @@ newtype MockSqlQueryT m a = MockSqlQueryT
 runMockSqlQueryT :: MockSqlQueryT m a -> [MockQuery] -> m a
 runMockSqlQueryT action mockQueries = (`runReaderT` mockQueries) . unMockSqlQueryT $ action
 
-instance MonadIO m => MonadSqlQuery (MockSqlQueryT m) where
+instance MonadIO m => MonadTransaction (MockSqlQueryT m) where
   type TransactionM (MockSqlQueryT m) = MockSqlQueryT m
+  withTransaction = id
 
+instance MonadIO m => MonadQuery (MockSqlQueryT m) where
+  type QueryRep (MockSqlQueryT m) = SqlQueryRep
   runQueryRep rep = do
     mockQueries <- MockSqlQueryT ask
     maybe (error $ "Could not find mock for query: " ++ show rep) liftIO
       $ msum $ map tryMockQuery mockQueries
     where
       tryMockQuery (MockQuery f) = f rep
-
-  withTransaction = id
 
 -- | A mocked query to use in 'runMockSqlQueryT'.
 --

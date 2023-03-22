@@ -479,11 +479,6 @@
     - 'Migration'
   result: '[Text]'
 
-- name: runMigrationSilent
-  args:
-    - 'Migration'
-  result: '[Text]'
-
 - name: runMigrationUnsafe
   args:
     - 'Migration'

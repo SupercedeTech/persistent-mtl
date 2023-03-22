@@ -10,8 +10,6 @@ import Conduit (runConduit, runResourceT, (.|))
 import qualified Conduit
 import qualified Data.Acquire as Acquire
 import qualified Data.Map.Strict as Map
-import Database.Persist.Sql
-    (Entity(..), Single(..), toPersistValue, (=.), (==.))
 import Test.Tasty
 import Test.Tasty.HUnit
 

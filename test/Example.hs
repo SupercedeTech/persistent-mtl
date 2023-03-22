@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -42,8 +43,6 @@ module Example
 import Control.Arrow ((&&&))
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Trans.Resource (MonadResource, ResourceT, runResourceT)
-import Database.Persist.Sql
-    (Entity(..), EntityField, Key, SelectOpt(..), Unique, toSqlKey)
 import Database.Persist.TH
     (mkMigrate, mkPersist, persistLowerCase, share, sqlSettings)
 #if !MIN_VERSION_persistent(2,13,0)
@@ -102,7 +101,8 @@ newtype TestApp a = TestApp
     , Monad
     , MonadIO
     , MonadRerunnableIO
-    , MonadSqlQuery
+    , MonadQuery
+    , MonadTransaction
     , MonadResource
     )
 
@@ -113,7 +113,7 @@ runTestApp :: BackendType -> TestApp a -> IO a
 runTestApp backendType m =
   withTestDB backendType $ \pool ->
     runResourceT . runSqlQueryT pool . unTestApp $ do
-      _ <- runMigrationSilent migration
+      _ <- runMigrationQuiet migration
       m
 
 runTestAppWith :: BackendType -> (SqlQueryEnv -> SqlQueryEnv) -> TestApp a -> IO a
@@ -121,7 +121,7 @@ runTestAppWith backendType f m =
   withTestDB backendType $ \pool -> do
     let env = mkSqlQueryEnv pool f
     runResourceT . runSqlQueryTWith env . unTestApp $ do
-      _ <- runMigrationSilent migration
+      _ <- runMigrationQuiet migration
       m
 
 {- Person functions -}
