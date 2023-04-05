@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UndecidableSuperClasses #-}
+{-# LANGUAGE ConstrainedClassMethods #-}
 
 {-|
 Module: Database.Persist.Monad.Class
@@ -31,14 +31,14 @@ import Data.Typeable (Typeable)
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep)
 
 -- | The type-class for monads that can run persistent database queries.
-class (Monad m, MonadSqlQuery (TransactionM m)) => MonadSqlQuery m where
+class Monad m => MonadSqlQuery m where
   type TransactionM m :: Type -> Type
 
   -- | Interpret the given SQL query operation.
   runQueryRep :: Typeable record => SqlQueryRep record a -> m a
 
   -- | Run all queries in the given action using the same database connection.
-  withTransaction :: TransactionM m a -> m a
+  withTransaction :: MonadSqlQuery (TransactionM m) => TransactionM m a -> m a
 
 {- Instances for common monad transformers -}
 
