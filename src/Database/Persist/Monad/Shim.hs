@@ -252,6 +252,9 @@ import GHC.Stack (HasCallStack)
 import Database.Persist.Monad.Class (MonadSqlQuery, runCompatibleQueryRep)
 import Database.Persist.Monad.SqlQueryRep (SqlQueryRep(..))
 
+-- | Dummy instance since it's safe to insert... nothing at all.
+instance SafeToInsert Void where
+
 {-# ANN module "HLint: ignore" #-}
 
 -- | The lifted version of 'Database.Persist.Sql.get'
@@ -598,58 +601,58 @@ deleteCascadeWhere a1 = runCompatibleQueryRep $ DeleteCascadeWhere a1
 
 -- | The lifted version of 'Database.Persist.Sql.parseMigration'
 parseMigration
-  :: (HasCallStack, MonadSqlQuery m, SafeToInsert Void)
+  :: (HasCallStack, MonadSqlQuery m)
   => Migration -> m (Either [Text] CautiousMigration)
 parseMigration a1 = runCompatibleQueryRep $ ParseMigration a1
 
 -- | The lifted version of 'Database.Persist.Sql.parseMigration''
 parseMigration'
-  :: (HasCallStack, MonadSqlQuery m, SafeToInsert Void)
+  :: (HasCallStack, MonadSqlQuery m)
   => Migration -> m CautiousMigration
 parseMigration' a1 = runCompatibleQueryRep $ ParseMigration' a1
 
 -- | The lifted version of 'Database.Persist.Sql.printMigration'
 printMigration
-  :: (HasCallStack, MonadSqlQuery m, SafeToInsert Void)
+  :: (HasCallStack, MonadSqlQuery m)
   => Migration -> m ()
 printMigration a1 = runCompatibleQueryRep $ PrintMigration a1
 
 -- | The lifted version of 'Database.Persist.Sql.showMigration'
 showMigration
-  :: (HasCallStack, MonadSqlQuery m, SafeToInsert Void)
+  :: (HasCallStack, MonadSqlQuery m)
   => Migration -> m [Text]
 showMigration a1 = runCompatibleQueryRep $ ShowMigration a1
 
 -- | The lifted version of 'Database.Persist.Sql.getMigration'
 getMigration
-  :: (HasCallStack, MonadSqlQuery m, SafeToInsert Void)
+  :: (HasCallStack, MonadSqlQuery m)
   => Migration -> m [Sql]
 getMigration a1 = runCompatibleQueryRep $ GetMigration a1
 
 -- | The lifted version of 'Database.Persist.Sql.runMigration'
 runMigration
-  :: (MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadSqlQuery m)
   => Migration -> m ()
 runMigration a1 = runCompatibleQueryRep $ RunMigration a1
 
 #if MIN_VERSION_persistent(2,10,2)
 -- | The lifted version of 'Database.Persist.Sql.runMigrationQuiet'
 runMigrationQuiet
-  :: (MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadSqlQuery m)
   => Migration -> m [Text]
 runMigrationQuiet a1 = runCompatibleQueryRep $ RunMigrationQuiet a1
 #endif
 
 -- | The lifted version of 'Database.Persist.Sql.runMigrationUnsafe'
 runMigrationUnsafe
-  :: (MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadSqlQuery m)
   => Migration -> m ()
 runMigrationUnsafe a1 = runCompatibleQueryRep $ RunMigrationUnsafe a1
 
 #if MIN_VERSION_persistent(2,10,2)
 -- | The lifted version of 'Database.Persist.Sql.runMigrationUnsafeQuiet'
 runMigrationUnsafeQuiet
-  :: (HasCallStack, MonadSqlQuery m, SafeToInsert Void)
+  :: (HasCallStack, MonadSqlQuery m)
   => Migration -> m [Text]
 runMigrationUnsafeQuiet a1 = runCompatibleQueryRep $ RunMigrationUnsafeQuiet a1
 #endif
@@ -668,64 +671,64 @@ getTableName a1 = runCompatibleQueryRep $ GetTableName a1
 
 -- | The lifted version of 'Database.Persist.Sql.withRawQuery'
 withRawQuery
-  :: (MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadSqlQuery m)
   => Text -> [PersistValue] -> ConduitM [PersistValue] Void IO a -> m a
 withRawQuery a1 a2 a3 = runCompatibleQueryRep $ WithRawQuery a1 a2 a3
 
 -- | The lifted version of 'Database.Persist.Sql.rawQueryRes'
 rawQueryRes
-  :: (MonadIO m2, MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadIO m2, MonadSqlQuery m)
   => Text -> [PersistValue] -> m (Acquire (ConduitM () [PersistValue] m2 ()))
 rawQueryRes a1 a2 = runCompatibleQueryRep $ RawQueryRes a1 a2
 
 -- | The lifted version of 'Database.Persist.Sql.rawQuery'
 rawQuery
-  :: (MonadResource m, MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadResource m, MonadSqlQuery m)
   => Text -> [PersistValue] -> ConduitM () [PersistValue] m ()
 rawQuery a1 a2 = fromAcquire $ runCompatibleQueryRep $ RawQueryRes a1 a2
 
 -- | The lifted version of 'Database.Persist.Sql.rawExecute'
 rawExecute
-  :: (MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadSqlQuery m)
   => Text -> [PersistValue] -> m ()
 rawExecute a1 a2 = runCompatibleQueryRep $ RawExecute a1 a2
 
 -- | The lifted version of 'Database.Persist.Sql.rawExecuteCount'
 rawExecuteCount
-  :: (MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadSqlQuery m)
   => Text -> [PersistValue] -> m Int64
 rawExecuteCount a1 a2 = runCompatibleQueryRep $ RawExecuteCount a1 a2
 
 -- | The lifted version of 'Database.Persist.Sql.rawSql'
 rawSql
-  :: (RawSql a, MonadSqlQuery m, SafeToInsert Void)
+  :: (RawSql a, MonadSqlQuery m)
   => Text -> [PersistValue] -> m [a]
 rawSql a1 a2 = runCompatibleQueryRep $ RawSql a1 a2
 
 -- | The lifted version of 'Database.Persist.Sql.transactionSave'
 transactionSave
-  :: (MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadSqlQuery m)
   => m ()
 transactionSave = runCompatibleQueryRep $ TransactionSave
 
 #if MIN_VERSION_persistent(2,9,0)
 -- | The lifted version of 'Database.Persist.Sql.transactionSaveWithIsolation'
 transactionSaveWithIsolation
-  :: (MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadSqlQuery m)
   => IsolationLevel -> m ()
 transactionSaveWithIsolation a1 = runCompatibleQueryRep $ TransactionSaveWithIsolation a1
 #endif
 
 -- | The lifted version of 'Database.Persist.Sql.transactionUndo'
 transactionUndo
-  :: (MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadSqlQuery m)
   => m ()
 transactionUndo = runCompatibleQueryRep $ TransactionUndo
 
 #if MIN_VERSION_persistent(2,9,0)
 -- | The lifted version of 'Database.Persist.Sql.transactionUndoWithIsolation'
 transactionUndoWithIsolation
-  :: (MonadSqlQuery m, SafeToInsert Void)
+  :: (MonadSqlQuery m)
   => IsolationLevel -> m ()
 transactionUndoWithIsolation a1 = runCompatibleQueryRep $ TransactionUndoWithIsolation a1
 #endif
@@ -743,7 +746,7 @@ transactionUndoWithIsolation a1 = runCompatibleQueryRep $ TransactionUndoWithIso
 -- select :: (MonadSqlQuery m, E.SqlSelect a r) => E.SqlQuery a -> m [r]
 -- select q = unsafeLiftSql "esqueleto-select" (E.select q)
 -- @
-unsafeLiftSql :: (MonadSqlQuery m, SafeToInsert Void) => Text -> (forall m2. MonadIO m2 => SqlPersistT m2 a) -> m a
+unsafeLiftSql :: (MonadSqlQuery m) => Text -> (forall m2. MonadIO m2 => SqlPersistT m2 a) -> m a
 unsafeLiftSql label action = runCompatibleQueryRep $ UnsafeLiftSql label action
 
 {- Helpers -}
