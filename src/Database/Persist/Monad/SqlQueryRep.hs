@@ -589,7 +589,7 @@ instance Typeable record => Show (SqlQueryRep record a) where
 
 -- | A helper to execute the actual @persistent@ function corresponding to
 -- each 'SqlQueryRep' data constructor.
-runSqlQueryRep :: MonadIO m => SqlQueryRep record a -> Persist.SqlPersistT m a
+runSqlQueryRep :: (SafeToInsert record, MonadIO m) => SqlQueryRep record a -> Persist.SqlPersistT m a
 runSqlQueryRep = \case
   Get a1 -> Persist.get a1
   GetMany a1 -> Persist.getMany a1

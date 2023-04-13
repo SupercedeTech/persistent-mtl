@@ -29,6 +29,7 @@ import Data.Kind (Type)
 import Data.Typeable (Typeable)
 
 import Database.Persist.Monad.SqlQueryRep (QueryRepCompatible(..), SqlQueryRep)
+import Database.Persist (SafeToInsert)
 
 -- | The type-class for monads that can execute queries in a single transaction
 class (Monad m, MonadQuery (TransactionM m)) => MonadTransaction m  where
@@ -44,12 +45,12 @@ class (Monad m) => MonadQuery m where
   type QueryRep m :: Type -> Type -> Type
 
   -- | Interpret the given query operation.
-  runQueryRep :: Typeable record => QueryRep m record a -> m a
+  runQueryRep :: (SafeToInsert record, Typeable record) => QueryRep m record a -> m a
 
 type MonadSqlQuery m = (MonadQuery m, QueryRepCompatible SqlQueryRep (QueryRep m))
 
 runCompatibleQueryRep
-  :: (MonadQuery m, QueryRepCompatible rep (QueryRep m), Typeable record)
+  :: (MonadQuery m, QueryRepCompatible rep (QueryRep m), Typeable record, SafeToInsert record)
   => rep record a
   -> m a
 runCompatibleQueryRep = runQueryRep . projectQueryRep
